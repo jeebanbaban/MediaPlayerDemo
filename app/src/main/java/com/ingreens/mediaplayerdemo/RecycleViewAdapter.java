@@ -1,6 +1,9 @@
 package com.ingreens.mediaplayerdemo;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,12 +26,12 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         TextView title;
-        ImageView play_pause;
+        ImageView idAlbumArt;
 
         public MyViewHolder(View view) {
             super(view);
             title =view.findViewById(R.id.title);
-            play_pause=view.findViewById(R.id.play_pause);
+            idAlbumArt=view.findViewById(R.id.idAlbumArt);
         }
     }
 
@@ -50,6 +53,22 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
     public void onBindViewHolder(MyViewHolder holder, int position) {
         Audio audio = list.get(position);
         holder.title.setText(audio.getTitle());
+
+
+
+        MediaMetadataRetriever metaRetriever= new MediaMetadataRetriever();
+        metaRetriever.setDataSource(audio.getData());
+        byte[] data=metaRetriever.getEmbeddedPicture();
+        if(data != null)
+        {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+            holder.idAlbumArt.setImageBitmap(bitmap);
+        }
+        else
+        {
+            holder.idAlbumArt.setImageResource(R.drawable.ic_action_music);
+        }
+
     }
 
     @Override

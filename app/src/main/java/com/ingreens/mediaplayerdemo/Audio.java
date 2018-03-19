@@ -1,5 +1,7 @@
 package com.ingreens.mediaplayerdemo;
 
+import android.graphics.Bitmap;
+
 import java.io.Serializable;
 
 /**
@@ -12,14 +14,25 @@ public class Audio implements Serializable {
     private String album;
     private String artist;
     private String duration;
-
-    public Audio(String data, String title, String album, String artist,String duration) {
+//    private Bitmap bitmap;
+    public Audio(String data, String title, String album, String artist, String duration) {
         this.data = data;
         this.title = title;
         this.album = album;
         this.artist = artist;
         this.duration=duration;
+//        this.bitmap=bitmap;
     }
+/*
+
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
+    }
+*/
 
     public String getDuration() {
         return duration;

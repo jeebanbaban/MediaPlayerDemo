@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.session.MediaSessionManager;
 import android.os.Binder;
@@ -22,9 +23,11 @@ import android.support.v7.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by root on 28/2/18.
@@ -43,7 +46,7 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
     public static final String ACTION_STOP = "com.ingreens.mediaplayerdemo.ACTION_STOP";
     //MediaSession
     private MediaSessionManager mediaSessionManager;
-    private MediaSessionCompat mediaSession;
+    public MediaSessionCompat mediaSession;
     private MediaControllerCompat.TransportControls transportControls;
     //AudioPlayer notification ID
     private static final int NOTIFICATION_ID = 101;
@@ -54,14 +57,24 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
     int totalDuration,currentPosition;
     private String mediaFile;
     private int resumePosition;
+    private MainActivity mainActivity;
     private AudioManager audioManager;
     private boolean ongoingCall = false;
+    private boolean musicPlaying = false;
     private PhoneStateListener phoneStateListener;
     private TelephonyManager telephonyManager;
+    private boolean isShuffle = false;
+    private boolean isRepeat = false;
     //List of available Audio files
     private ArrayList<Audio> audioList;
     private int audioIndex = -1;
-    private Audio activeAudio; //an object of the currently playing audio
+    public Audio activeAudio; //an object of the currently playing audio
+
+    TitleListener titleListener;
+
+    public void setTitleListener(TitleListener titleListener){
+        this.titleListener=titleListener;
+    }
 
 
     @Override
@@ -105,26 +118,6 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
         return mediaPlayer.isPlaying();
     }
 
-    public int seekBarGetCurrentPosition(){    //This method is created to get SongCurrentPosition from mediaplayer for seekbar
-        if(mediaPlayer!=null&&mediaPlayer.isPlaying()){
-            currentPosition=mediaPlayer.getCurrentPosition();
-            System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-            System.out.println("song er current duration=="+currentPosition);
-            System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-        }
-        return currentPosition;
-    }
-    public int seekBarGetTotalDuration(){
-        if (mediaPlayer!=null&&mediaPlayer.isPlaying()){
-            totalDuration=mediaPlayer.getDuration();
-            System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-            System.out.println("song er total duration===="+totalDuration);
-            System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-
-        }
-        return totalDuration;
-    }
-
     //The system calls this method when an activity, requests the service be started
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -136,6 +129,13 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
             if (audioIndex != -1 && audioIndex < audioList.size()) {
                 //index is in a valid range
                 activeAudio = audioList.get(audioIndex);
+                System.out.println("***********************");
+                System.out.println("***********************");
+                System.out.println("song title ==="+activeAudio.getTitle());
+                System.out.println("song album ==="+activeAudio.getAlbum());
+                System.out.println("song artist ==="+activeAudio.getArtist());
+                System.out.println("***********************");
+
             }else {
                 stopSelf();
             }
@@ -185,11 +185,18 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
         stopMedia();
         //stop the service
         stopSelf();
-        skipToNext();
+       /* skipToNext();
         updateMetaData();
-        buildNotification(PlaybackStatus.PLAYING);
-
-
+        buildNotification(PlaybackStatus.PLAYING);*/
+        if (isRepeat){
+            repeatSong();
+        }else if(isShuffle) {
+            suffleSong();
+        }else {
+            skipToNext();
+            updateMetaData();
+            buildNotification(PlaybackStatus.PLAYING);
+        }
     }
 
     //Handle errors
@@ -220,10 +227,6 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
     public void onPrepared(MediaPlayer mp) {
         //Invoked when the media source is ready for playback.
         playMedia();
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@");
-        System.out.println("mediaplayer er duration=="+mediaPlayer.getDuration());
-        System.out.println("current duration=="+mediaPlayer.getCurrentPosition());
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@");
     }
 
     @Override
@@ -383,16 +386,21 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
                         if (mediaPlayer != null) {
                             pauseMedia();
                             ongoingCall = true;
+                            musicPlaying=false;
                         }
                         break;
                     case TelephonyManager.CALL_STATE_IDLE:
                         // Phone idle. Start playing.
-                        if (mediaPlayer != null) {
-                            if (ongoingCall) {
-                                ongoingCall = false;
-                                resumeMedia();
-                            }
-                        }
+                       if (musicPlaying==false){
+                            musicPlaying=true;
+                           if (mediaPlayer != null) {
+                               if (ongoingCall) {
+                                   ongoingCall = false;
+                                   resumeMedia();
+                               }
+                           }
+
+                       }
                         break;
                 }
             }
@@ -510,15 +518,50 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, activeAudio.getTitle())
                 .build());
     }
-    public void skipToNext() {
+    public void repeatSong() {
 
-        if (audioIndex == audioList.size() - 1) {
+        if (audioIndex !=-1 &&  audioIndex<=audioList.size()) {
+            activeAudio = audioList.get(audioIndex);
+        } else {
+            activeAudio = audioList.get(++audioIndex);
+        }
+
+        //Update stored index
+        new StorageUtil(getApplicationContext()).storeAudioIndex(audioIndex);
+        System.out.println("####################################################################");
+        System.out.println("repeat song index=="+audioIndex);
+        System.out.println("####################################################################");
+
+        stopMedia();
+        //reset mediaPlayer
+        mediaPlayer.reset();
+        initMediaPlayer();
+    }
+    public void suffleSong(){
+        if (audioList.size()>0){
+            Random random=new Random();
+            audioIndex=random.nextInt((audioList.size() - 1) - 0 + 1) + 0;
+            activeAudio=audioList.get(audioIndex);
+            new StorageUtil(getApplicationContext()).storeAudioIndex(audioIndex);
+            stopMedia();
+            mediaPlayer.reset();
+            initMediaPlayer();
+
+        }
+    }
+    public void skipToNext() {
+        if (isShuffle){
+            suffleSong();
+           setTitleImage();
+        }else if (audioIndex == audioList.size() - 1) {
             //if last in playlist
             audioIndex = 0;
             activeAudio = audioList.get(audioIndex);
+            setTitleImage();
         } else {
             //get next in playlist
             activeAudio = audioList.get(++audioIndex);
+            setTitleImage();
         }
 
         //Update stored index
@@ -531,15 +574,19 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
     }
 
     public void skipToPrevious() {
-
-        if (audioIndex == 0) {
+        if (isShuffle){
+            suffleSong();
+            setTitleImage();
+        }else if (audioIndex == 0) {
             //if first in playlist
             //set index to the last of audioList
             audioIndex = audioList.size() - 1;
             activeAudio = audioList.get(audioIndex);
+            setTitleImage();
         } else {
             //get previous in playlist
             activeAudio = audioList.get(--audioIndex);
+            setTitleImage();
         }
 
         //Update stored index
@@ -549,6 +596,54 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
         //reset mediaPlayer
         mediaPlayer.reset();
         initMediaPlayer();
+    }
+    public void repeat(){
+
+        if(isRepeat){
+            isRepeat = false;
+            Toast.makeText(getApplicationContext(), "Repeat is OFF", Toast.LENGTH_SHORT).show();
+            //btnRepeat.setImageResource(R.drawable.btn_repeat);
+        }else{
+            // make repeat to true
+            isRepeat = true;
+            Toast.makeText(getApplicationContext(), "Repeat is ON", Toast.LENGTH_SHORT).show();
+            // make shuffle to false
+            isShuffle = false;
+            //btnRepeat.setImageResource(R.drawable.btn_repeat_focused);
+            //btnShuffle.setImageResource(R.drawable.btn_shuffle);
+        }
+    }
+    public void suffle(){
+        if(isShuffle){
+            isShuffle = false;
+            Toast.makeText(getApplicationContext(), "Shuffle is OFF", Toast.LENGTH_SHORT).show();
+            //btnShuffle.setImageResource(R.drawable.btn_shuffle);
+        }else{
+            // make repeat to true
+            isShuffle= true;
+            Toast.makeText(getApplicationContext(), "Shuffle is ON", Toast.LENGTH_SHORT).show();
+            // make shuffle to false
+            isRepeat = false;
+            //btnShuffle.setImageResource(R.drawable.btn_shuffle_focused);
+            // btnRepeat.setImageResource(R.drawable.btn_repeat);
+        }
+    }
+    public void setTitleImage(){
+        Audio audio=audioList.get(audioIndex);
+        this.titleListener.setTitle(audio.getAlbum());
+        MediaMetadataRetriever metaRetriever= new MediaMetadataRetriever();
+        metaRetriever.setDataSource(audio.getData());
+        byte[] data=metaRetriever.getEmbeddedPicture();
+        if(data != null)
+        {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+            this.titleListener.setAlbumArt(bitmap);
+        }
+        else
+        {
+            this.titleListener.setAlbumArt();
+        }
+
     }
     public void buildNotification(PlaybackStatus playbackStatus) {
 
@@ -640,4 +735,23 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
         }
     }
 
+    public int seekBarGetCurrentPosition(){    //This method is created to get SongCurrentPosition from mediaplayer for seekbar
+        if(mediaPlayer!=null&&mediaPlayer.isPlaying()){
+            currentPosition=mediaPlayer.getCurrentPosition();
+            /*System.out.println("@@@@@@@@@@@@@@@@ service @@@@@@@@@@@@@@1234");
+            System.out.println("song er current duration=="+currentPosition);
+            System.out.println("@@@@@@@@@@@@@@ service @@@@@@@@@@@@@@@@");*/
+        }
+        return currentPosition;
+    }
+    public int seekBarGetTotalDuration(){
+        if (mediaPlayer!=null&&mediaPlayer.isPlaying()){
+            totalDuration=mediaPlayer.getDuration();
+            /*System.out.println("@@@@@@@@@@@@@@@@ service @@@@@@@@@@@@@@@@1234");
+            System.out.println("song er total duration===="+totalDuration);
+            System.out.println("@@@@@@@@@@@@@@@@@ service @@@@@@@@@@@@@@@@@");*/
+
+        }
+        return totalDuration;
+    }
 }

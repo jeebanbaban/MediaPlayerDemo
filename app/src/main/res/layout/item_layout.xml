@@ -14,17 +14,16 @@
         android:orientation="horizontal"
         android:padding="10dp">
 
-        <ImageButton
-            android:id="@+id/play_pause"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:src="@android:drawable/ic_media_play"
+        <ImageView
+            android:id="@+id/idAlbumArt"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/audio_file"
+            android:scaleType="center"
             android:layout_gravity="center_vertical"
-            android:tint="@color/colorAccent"
             android:foregroundGravity="center_vertical"
             android:layout_marginLeft="4dp"
-            android:layout_marginRight="8dp"
-            android:backgroundTint="#ffffff" />
+            android:layout_marginRight="8dp" />
 
         <TextView
             android:id="@+id/title"
@@ -36,7 +35,7 @@
             android:layout_gravity="center_vertical"
             android:foregroundGravity="center_horizontal"
             android:textStyle="italic"
-            android:textSize="20dp"/>
+            android:textSize="15dp"/>
 
 
     </LinearLayout>

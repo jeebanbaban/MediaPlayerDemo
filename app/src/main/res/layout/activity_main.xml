@@ -63,6 +63,37 @@
             android:layout_weight="1"/>
     </LinearLayout>
     <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+        <Button
+            android:id="@+id/btnRepeat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="repeat"/>
+        <Button
+            android:id="@+id/btnSuffle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="suffle"/>
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center">
+
+        <ImageView
+            android:id="@+id/idAlbumArt"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/itunes"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
@@ -76,6 +107,11 @@
                 android:layout_height="wrap_content"
                 android:text="current duration"
                 android:layout_weight="1"/>
+            <TextView
+                android:id="@+id/songTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="song title"/>
 
             <TextView
                 android:id="@+id/totalDuration"
@@ -109,4 +145,6 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
+
+
 </LinearLayout>
