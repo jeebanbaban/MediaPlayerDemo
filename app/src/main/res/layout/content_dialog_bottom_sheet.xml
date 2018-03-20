@@ -2,13 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bottom_sheet"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_width="fill_parent"
+    android:layout_height="match_parent"
     android:background="#fff"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="1dp"
     app:behavior_hideable="true"
-    app:behavior_peekHeight="56dp"
+    app:behavior_peekHeight="10dp"
     app:layout_behavior="android.support.design.widget.BottomSheetBehavior">
 
     <LinearLayout
@@ -18,59 +18,144 @@
         android:layout_gravity="center_vertical"
         android:weightSum="3">
 
-        <TextView
+        <ImageView
+            android:id="@+id/bottomSheetAlbumArt"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:src="@drawable/audio_file"
+            android:scaleType="center"
+            android:layout_gravity="center_vertical"
+            android:foregroundGravity="center_vertical"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="8dp"
+            android:layout_weight="0.5"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_weight="1.5">
+
+            <TextView
+                android:id="@+id/bottomSheetTitle"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="this is the song title"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textColor="#212121"
+                android:layout_gravity="center_vertical"
+                android:foregroundGravity="center_horizontal"
+                android:textStyle="bold"
+                android:textSize="16dp"
+                android:singleLine="true"/>
+            <TextView
+                android:id="@+id/bottomSheetArtist"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="artist name"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textColor="#212121"
+                android:layout_gravity="center_vertical"
+                android:foregroundGravity="center_horizontal"
+                android:textStyle="normal"
+                android:textSize="13dp"
+                android:singleLine="true"/>
+
+        </LinearLayout>
+        <ImageButton
+            android:id="@+id/bSheetPlaybtn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:layout_weight="2"
-            android:text="Order Details"
-            android:textColor="#444"
-            android:textSize="18dp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:gravity="right"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textStyle="bold"
-            android:textSize="15dp"
-            android:text="₹435.00">
-
-        </TextView>
+            android:src="@drawable/ic_play_pause"
+            android:layout_weight="1"/>
     </LinearLayout>
-
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Chicken Fried Rice 1x1" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Paneer Tikka 1x2" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Delivery Address"
-        android:textColor="#444"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Flat No 404, Skyline Apartments, Vizag - 500576" />
-
-    <Button
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="300dp">
+        <ImageView
+            android:id="@+id/bottomSheetBckground"
+            android:layout_width="fill_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/image2"
+            />
+    </LinearLayout>
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:background="#000"
-        android:foreground="?attr/selectableItemBackground"
-        android:text="PROCEED PAYMENT"
-        android:textColor="#fff" />
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/bottomSheetcurrentDuration"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="current duration"
+            android:layout_weight="1"
+            android:gravity="left"/>
+        <Button
+            android:id="@+id/bottomSheetRepeat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="r"/>
+        <Button
+            android:id="@+id/bottomSheetSuffle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="s"/>
+
+        <TextView
+            android:id="@+id/bottomSheettotalDuration"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="current duration"
+            android:layout_weight="1"
+            android:gravity="right"/>
+
+    </LinearLayout>
+    <SeekBar
+        android:id="@+id/bottomSheetSeekbar"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:maxHeight="5dp"
+        android:progress="0"
+        android:tag="tint_accent_color"
+        android:layout_marginBottom="10dp"/>
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <Button
+        android:id="@+id/bottomSheetBack"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="bck"
+        android:layout_weight="1"/>
+    <Button
+        android:id="@+id/bottomSheetPrev"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="prv"
+        android:layout_weight="1"/>
+    <Button
+        android:id="@+id/bottomSheetPlayPause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="p/p"
+        android:layout_weight="1"/>
+    <Button
+        android:id="@+id/bottomSheetNext"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="nxt"
+        android:layout_weight="1"/>
+    <Button
+        android:id="@+id/bottomSheetFrwd"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="fwd"
+        android:layout_weight="1"/>
+
+</LinearLayout>
 
 </LinearLayout>

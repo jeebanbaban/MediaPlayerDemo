@@ -29,10 +29,12 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -55,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ArrayList<Audio> audioList=new ArrayList<>();
     //Audio audio;
     Button btnPrevious,btnNext,btnBackward,btnForward,btnPlayPause,btnStop;
+    Button bottomSheetplaypause,bottomSheetBack,bottomSheetFwd,bottomSheetPrev,bottomSheetNext;
     boolean sentToSettings = false;
     SharedPreferences permissionStatus;
      RecyclerView recyclerView;
@@ -65,20 +68,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      int totalDuration,currentDuration;
     private int seekForwardTime = 5000; // 5000 milliseconds
     private int seekBackwardTime = 5000; // 5000 milliseconds
-     SeekBar songProgressBar;
+     SeekBar songProgressBar,bottomSheetSeekbar;
      Handler seek_handler=new Handler();
-     TextView songCurrentDurationLabel;
-     TextView songTotalDurationLabel;
+     TextView songCurrentDurationLabel,bottomSheetcurrentDuration;
+     TextView songTotalDurationLabel,bottomSheettotalDuration;
      TextView songtitle;
-     Button repeat,suffle;
+     Button repeat,suffle,bottomSheetRepeat,bottomSheetSuffle;
      ImageView albumart;
      boolean updateProgress=true;
       Utilities utils;
+      TextView bottomSheetTitle,bottomSheetArtist;
+      ImageView bottomSheetAlbumart,bottomSheetBckground,bottomBackground;
+      ImageButton bottomSheetPlaybtn;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_bottom_sheet);
         btnPrevious=findViewById(R.id.btnPrevious);
         btnNext=findViewById(R.id.btnNext);
         btnBackward=findViewById(R.id.btnBackward);
@@ -86,6 +93,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnPlayPause=findViewById(R.id.btnPlayPause);
         btnStop=findViewById(R.id.btnStop);
         songProgressBar=findViewById(R.id.songProgressBar);
+        bottomSheetSeekbar=findViewById(R.id.bottomSheetSeekbar);
         repeat=findViewById(R.id.btnRepeat);
         suffle=findViewById(R.id.btnSuffle);
         albumart=findViewById(R.id.idAlbumArt);
@@ -93,6 +101,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         songCurrentDurationLabel=findViewById(R.id.currentDuration);
         songTotalDurationLabel=findViewById(R.id.totalDuration);
         songtitle=findViewById(R.id.songTitle);
+        bottomSheetAlbumart=findViewById(R.id.bottomSheetAlbumArt);
+        bottomSheetTitle=findViewById(R.id.bottomSheetTitle);
+        bottomSheetArtist=findViewById(R.id.bottomSheetArtist);
+        bottomSheetPlaybtn=findViewById(R.id.bSheetPlaybtn);
+        bottomSheetBckground=findViewById(R.id.bottomSheetBckground);
+        bottomSheetcurrentDuration=findViewById(R.id.bottomSheetcurrentDuration);
+        bottomSheettotalDuration=findViewById(R.id.bottomSheettotalDuration);
+        bottomSheetRepeat=findViewById(R.id.bottomSheetRepeat);
+        bottomSheetSuffle=findViewById(R.id.bottomSheetSuffle);
+        bottomSheetplaypause=findViewById(R.id.bottomSheetPlayPause);
+        bottomSheetBack=findViewById(R.id.bottomSheetBack);
+        bottomSheetFwd=findViewById(R.id.bottomSheetFrwd);
+        bottomSheetPrev=findViewById(R.id.bottomSheetPrev);
+        bottomSheetNext=findViewById(R.id.bottomSheetNext);
+       // bottomBackground=findViewById(R.id.bottombackground);
         utils=new Utilities();
         //player=new MediaplayerService();
         btnStop.setOnClickListener(this);
@@ -103,24 +126,102 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnForward.setOnClickListener(this);
         repeat.setOnClickListener(this);
         suffle.setOnClickListener(this);
+        bottomSheetPlaybtn.setOnClickListener(this);
+        bottomSheetRepeat.setOnClickListener(this);
+        bottomSheetSuffle.setOnClickListener(this);
+        bottomSheetplaypause.setOnClickListener(this);
+        bottomSheetBack.setOnClickListener(this);
+        bottomSheetFwd.setOnClickListener(this);
+        bottomSheetPrev.setOnClickListener(this);
+        bottomSheetNext.setOnClickListener(this);
+        View bottomSheet = findViewById(R.id.design_bottom_sheet);
+        final BottomSheetBehavior behavior = BottomSheetBehavior.from(bottomSheet);
         // Listeners
+
+        behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                switch (newState) {
+                    case BottomSheetBehavior.STATE_DRAGGING:
+                        Log.i("BottomSheetCallback", "BottomSheetBehavior.STATE_DRAGGING");
+                        break;
+                    case BottomSheetBehavior.STATE_SETTLING:
+                        Log.i("BottomSheetCallback", "BottomSheetBehavior.STATE_SETTLING");
+                        break;
+                    case BottomSheetBehavior.STATE_EXPANDED:
+                        Log.i("BottomSheetCallback", "BottomSheetBehavior.STATE_EXPANDED");
+                        break;
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        Log.i("BottomSheetCallback", "BottomSheetBehavior.STATE_COLLAPSED");
+                        break;
+                    case BottomSheetBehavior.STATE_HIDDEN:
+                        Log.i("BottomSheetCallback", "BottomSheetBehavior.STATE_HIDDEN");
+                        break;
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                Log.i("BottomSheetCallback", "slideOffset: " + slideOffset);
+            }
+        });
+
+
+
+       bottomSheet.setOnClickListener(new View.OnClickListener() {
+           @Override
+           public void onClick(View view) {
+               if (behavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+                   behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+               } else {
+                   //behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+               }
+           }
+       });
+
+
         songProgressBar.setOnTouchListener(new View.OnTouchListener() {
 
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
+
                 switch (motionEvent.getAction()){
+
                     case MotionEvent.ACTION_DOWN: {
 //                        player.mediaPlayer.pause();
                         updateProgress=false;
                     } break;
-                    case MotionEvent.ACTION_UP: {
+                    case MotionEvent.ACTION_UP:
                         updateProgress=false;
                         SeekBar seekBar=(SeekBar)view;
                         int progress=player.mediaPlayer.getDuration()*seekBar.getProgress()/100;
                         player.mediaPlayer.seekTo(progress);
 //                        player.mediaPlayer.start();
                         updateProgress=true;
+                     break;
+                }
+                return false;
+            }
+        });
+        bottomSheetSeekbar.setOnTouchListener(new View.OnTouchListener() {
+
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+
+                switch (motionEvent.getAction()){
+
+                    case MotionEvent.ACTION_DOWN: {
+//                        player.mediaPlayer.pause();
+                        updateProgress=false;
                     } break;
+                    case MotionEvent.ACTION_UP:
+                        updateProgress=false;
+                        SeekBar seekBar=(SeekBar)view;
+                        int progress=player.mediaPlayer.getDuration()*seekBar.getProgress()/100;
+                        player.mediaPlayer.seekTo(progress);
+//                        player.mediaPlayer.start();
+                        updateProgress=true;
+                        break;
                 }
                 return false;
             }
@@ -185,7 +286,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     loadAudio();
                     initRecyclerView();
                 }
+
             }
+
+
 
 
 
@@ -226,6 +330,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     songtitle.setText(audio.getTitle());
                     songtitle.setText(audio.getAlbum());
+                    bottomSheetTitle.setText(audio.getAlbum());
+                    bottomSheetArtist.setText(audio.getArtist());
+                    bottomSheetTitle.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+                    bottomSheetTitle.setSelected(true);
+                    bottomSheetTitle.setSingleLine(true);
+                    bottomSheetArtist.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+                    bottomSheetArtist.setSelected(true);
+                    bottomSheetArtist.setSingleLine(true);
+
+
+
                     //albumart.setImageBitmap(audio.getAlbumart());
                     //albumart.setImageResource(audio.getAlbumart());
                     updateProgressBar();
@@ -237,6 +352,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void setAlbumArt(Bitmap bmp){
         albumart.setImageBitmap(bmp); //associated cover art in bitmap
+        bottomSheetAlbumart.setImageBitmap(bmp);
+        bottomSheetBckground.setImageBitmap(bmp);
+        //bottomBackground.setImageBitmap(bmp);
         albumart.setAdjustViewBounds(true);
         albumart.setLayoutParams(new LinearLayout.LayoutParams(500, 500));
     }
@@ -244,6 +362,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void setAlbumArt() {
         albumart.setImageResource(R.drawable.audio_file); //any default cover resourse folder
+        bottomSheetAlbumart.setImageResource(R.drawable.audio_file);
         albumart.setAdjustViewBounds(true);
         albumart.setLayoutParams(new LinearLayout.LayoutParams(500,500 ));
     }
@@ -410,6 +529,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch(view.getId()){
+            case R.id.bottomSheetPrev:
             case R.id.btnPrevious:
                 if (player==null){
                     return;
@@ -417,6 +537,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 player.skipToPrevious();
                 Toast.makeText(player, "previous song bajbe re.", Toast.LENGTH_SHORT).show();
                 break;
+            case R.id.bottomSheetNext:
             case R.id.btnNext:
                 if (player==null){
                     return;
@@ -424,6 +545,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 player.skipToNext();
                 Toast.makeText(player, "next song bajbe re...", Toast.LENGTH_SHORT).show();
                 break;
+            case R.id.bottomSheetBack:
             case R.id.btnBackward:
                 if (player==null){
                     return;
@@ -439,6 +561,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     player.mediaPlayer.seekTo(0);
                 }
                 break;
+            case R.id.bottomSheetFrwd:
             case R.id.btnForward:
                 if (player==null){
                     return;
@@ -483,6 +606,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     return;
                 }
                 player.stopMedia();
+                break;
                 case R.id.btnRepeat:
                 if (player==null){
                     return;
@@ -495,6 +619,83 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 player.suffle();
                 break;
+            case R.id.bSheetPlaybtn:
+                if (player==null){
+                    return;
+                }
+                if (player.isPlaying()){
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                    System.out.println("pause hoye geche");
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                    player.pauseMedia();
+                    player.buildNotification(PlaybackStatus.PAUSED);
+                    seek_handler.removeCallbacks(mUpdateTimeTask);
+                }else{
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                    System.out.println("play hoye geche");
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                    player.playMedia();
+                    player.buildNotification(PlaybackStatus.PLAYING);
+                    updateProgressBar();
+                }
+                break;
+            case R.id.bottomSheetRepeat:
+                if (player==null){
+                    return;
+                }
+                player.repeat();
+                break;
+            case R.id.bottomSheetSuffle:
+                if (player==null){
+                    return;
+                }
+                player.suffle();
+                break;
+            case R.id.bottomSheetPlayPause:
+                if (player==null){
+                    return;
+                }
+                if (player.isPlaying()){
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                    System.out.println("pause hoye geche");
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                    player.pauseMedia();
+                    player.buildNotification(PlaybackStatus.PAUSED);
+                    seek_handler.removeCallbacks(mUpdateTimeTask);
+                }else{
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                    System.out.println("play hoye geche");
+                    System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                    player.playMedia();
+                    player.buildNotification(PlaybackStatus.PLAYING);
+                    updateProgressBar();
+                }
+                break;
+            /*case R.id.bottomSheetBack:
+                if (player==null){
+                    return;
+                }
+                // get current song position
+                //int currentposition = player.seekBarGetCurrentPosition();
+                // check if seekBackward time is greater than 0 sec
+                if(currentposition - seekBackwardTime >= 0){
+                    // forward song
+                    player.mediaPlayer.seekTo(currentposition - seekBackwardTime);
+                }else{
+                    // backward to starting position
+                    player.mediaPlayer.seekTo(0);
+                }
+                break;*/
+            /*case R.id.bottomSheetFrwd:
+                break;*/
+           /* case R.id.bottomSheetPrev:
+                if (player==null){
+                    return;
+                }
+                player.skipToPrevious();
+                break;*/
+            /*case R.id.bottomSheetNext:
+                break;*/
 
         }
     }
@@ -516,9 +717,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 currentDuration = player.seekBarGetCurrentPosition();
                 songCurrentDurationLabel.setText(utils.milliSecondsToTimer(currentDuration)); // Displaying time completed playing
                 songTotalDurationLabel.setText(utils.milliSecondsToTimer(totalDuration)); // Displaying time completed playing
+                bottomSheetcurrentDuration.setText(utils.milliSecondsToTimer(currentDuration));
+                bottomSheettotalDuration.setText(utils.milliSecondsToTimer(totalDuration));
                 int progress = (int)(utils.getProgressPercentage(currentDuration, totalDuration));
                 // TODO some task
                 songProgressBar.setProgress(progress);/* Running this thread after 100 milliseconds */
+                bottomSheetSeekbar.setProgress(progress);
 
                 seek_handler.postDelayed(this, 100);
 
@@ -558,6 +762,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void setTitle(String album) {
         songtitle.setText(album);
+        bottomSheetTitle.setText(album);
     }
+
 
 }
