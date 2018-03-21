@@ -15,20 +15,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_gravity="center_vertical"
-        android:weightSum="3">
+        android:layout_gravity="center_vertical">
 
         <ImageView
             android:id="@+id/bottomSheetAlbumArt"
             android:layout_width="0dp"
             android:layout_height="50dp"
-            android:src="@drawable/audio_file"
+            android:src="@drawable/ic_action_music"
             android:scaleType="center"
             android:layout_gravity="center_vertical"
             android:foregroundGravity="center_vertical"
-            android:layout_marginLeft="4dp"
-            android:layout_marginRight="8dp"
-            android:layout_weight="0.5"/>
+            android:layout_marginLeft="2dp"
+            android:layout_marginRight="2dp"
+            android:layout_weight="0.4"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -66,8 +65,8 @@
             android:id="@+id/bSheetPlaybtn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_play_pause"
-            android:layout_weight="1"/>
+            android:layout_gravity="center_vertical"
+            android:layout_weight="0.5"/>
     </LinearLayout>
     <LinearLayout
         android:layout_width="fill_parent"
@@ -137,12 +136,12 @@
         android:layout_height="wrap_content"
         android:text="prv"
         android:layout_weight="1"/>
-    <Button
+    <ImageButton
         android:id="@+id/bottomSheetPlayPause"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="p/p"
-        android:layout_weight="1"/>
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_weight="1.2"
+        />
     <Button
         android:id="@+id/bottomSheetNext"
         android:layout_width="0dp"

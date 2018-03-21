@@ -69,7 +69,6 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
     private ArrayList<Audio> audioList;
     private int audioIndex = -1;
     public Audio activeAudio; //an object of the currently playing audio
-
     TitleListener titleListener;
 
     public void setTitleListener(TitleListener titleListener){
