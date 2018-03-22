@@ -1,4 +1,4 @@
-package com.ingreens.mediaplayerdemo;
+package com.ingreens.mediaplayerdemo.Service;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
@@ -24,6 +25,14 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.ingreens.mediaplayerdemo.Activity.MainActivity;
+import com.ingreens.mediaplayerdemo.Constant.Allkey;
+import com.ingreens.mediaplayerdemo.Model.Audio;
+import com.ingreens.mediaplayerdemo.Status.PlaybackStatus;
+import com.ingreens.mediaplayerdemo.R;
+import com.ingreens.mediaplayerdemo.Utils.StorageUtil;
+import com.ingreens.mediaplayerdemo.Listner.TitleListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,30 +53,38 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
     public static final String ACTION_PREVIOUS = "com.ingreens.mediaplayerdemo.ACTION_PREVIOUS";
     public static final String ACTION_NEXT = "com.ingreens.mediaplayerdemo.ACTION_NEXT";
     public static final String ACTION_STOP = "com.ingreens.mediaplayerdemo.ACTION_STOP";
+    //AudioPlayer notification ID
+    private static final int NOTIFICATION_ID = 101;
+
+    SharedPreferences preferences;
+
     //MediaSession
     private MediaSessionManager mediaSessionManager;
     public MediaSessionCompat mediaSession;
     private MediaControllerCompat.TransportControls transportControls;
-    //AudioPlayer notification ID
-    private static final int NOTIFICATION_ID = 101;
-
     // Binder given to clients
     private final IBinder iBinder = new LocalBinder();
+
     public MediaPlayer mediaPlayer;
-    int totalDuration,currentPosition;
+
     private String mediaFile;
+
+    private int totalDuration,currentPosition;
     private int resumePosition;
-    private MainActivity mainActivity;
-    private AudioManager audioManager;
+    private int audioIndex = -1;
+
     private boolean ongoingCall = false;
     private boolean musicPlaying = false;
-    private PhoneStateListener phoneStateListener;
-    private TelephonyManager telephonyManager;
     private boolean isShuffle = false;
     private boolean isRepeat = false;
+
+    private MainActivity mainActivity;
+    private AudioManager audioManager;
+
     //List of available Audio files
     private ArrayList<Audio> audioList;
-    private int audioIndex = -1;
+    private PhoneStateListener phoneStateListener;
+    private TelephonyManager telephonyManager;
     public Audio activeAudio; //an object of the currently playing audio
     TitleListener titleListener;
 
@@ -79,16 +96,12 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
     @Override
     public void onCreate() {
         super.onCreate();
-        // Perform one-time setup procedures
-
-        // Manage incoming phone calls during playback.
-        // Pause MediaPlayer on incoming call,
-        // Resume on hangup.
         callStateListener();
         //ACTION_AUDIO_BECOMING_NOISY -- change in audio outputs -- BroadcastReceiver
         registerBecomingNoisyReceiver();
         //Listen for new Audio to play -- BroadcastReceiver
         register_playNewAudio();
+        preferences=getSharedPreferences(Allkey.PREF_NAME,MODE_PRIVATE);
     }
 
     public void initMediaPlayer() {
@@ -116,6 +129,7 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
     public boolean isPlaying() {
         return mediaPlayer.isPlaying();
     }
+
 
     //The system calls this method when an activity, requests the service be started
     @Override
@@ -182,11 +196,7 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
         System.out.println("media player complete hoye geche");
         System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
         stopMedia();
-        //stop the service
         stopSelf();
-       /* skipToNext();
-        updateMetaData();
-        buildNotification(PlaybackStatus.PLAYING);*/
         if (isRepeat){
             repeatSong();
         }else if(isShuffle) {
@@ -197,6 +207,13 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
             buildNotification(PlaybackStatus.PLAYING);
         }
     }
+
+    public void playMediaPlayer(){
+       // int lastsongindex=preferences.getInt(Allkey.LAST_SONG_INDEX,0);
+
+
+    }
+
 
     //Handle errors
     @Override
@@ -226,6 +243,15 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
     public void onPrepared(MediaPlayer mp) {
         //Invoked when the media source is ready for playback.
         playMedia();
+        System.out.println("LSLSLSLSLSLSLSLSLSLSLSLSLSLSLSLSLSLSLSL");
+        System.out.println("last song===="+activeAudio.getData());
+        System.out.println("last song===="+audioIndex);
+        System.out.println("LSLSLSLSLSLSLSLSLSLSLSLSLSLSLSLSLSLSLSL");
+        SharedPreferences.Editor editor=preferences.edit();
+        editor.putString(Allkey.LAST_SONG,activeAudio.getData());
+        editor.putInt(Allkey.LAST_SONG_INDEX,audioIndex);
+        editor.commit();
+        //getSharedPreferences("pref",MODE_PRIVATE).edit().putString("lastsong",activeAudio.getData()).commit()
     }
 
     @Override
@@ -734,22 +760,16 @@ public class MediaplayerService extends Service implements MediaPlayer.OnComplet
         }
     }
 
-    public int seekBarGetCurrentPosition(){    //This method is created to get SongCurrentPosition from mediaplayer for seekbar
+    public int seekBarGetCurrentPosition(){
+        //This method is created to get SongCurrentPosition from mediaplayer for seekbar
         if(mediaPlayer!=null&&mediaPlayer.isPlaying()){
             currentPosition=mediaPlayer.getCurrentPosition();
-            /*System.out.println("@@@@@@@@@@@@@@@@ service @@@@@@@@@@@@@@1234");
-            System.out.println("song er current duration=="+currentPosition);
-            System.out.println("@@@@@@@@@@@@@@ service @@@@@@@@@@@@@@@@");*/
         }
         return currentPosition;
     }
     public int seekBarGetTotalDuration(){
         if (mediaPlayer!=null&&mediaPlayer.isPlaying()){
             totalDuration=mediaPlayer.getDuration();
-            /*System.out.println("@@@@@@@@@@@@@@@@ service @@@@@@@@@@@@@@@@1234");
-            System.out.println("song er total duration===="+totalDuration);
-            System.out.println("@@@@@@@@@@@@@@@@@ service @@@@@@@@@@@@@@@@@");*/
-
         }
         return totalDuration;
     }

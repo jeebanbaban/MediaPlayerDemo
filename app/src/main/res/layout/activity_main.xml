@@ -5,48 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.ingreens.mediaplayerdemo.MainActivity"
+    tools:context="com.ingreens.mediaplayerdemo.Activity.MainActivity"
     tools:showIn="@layout/activity_main">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:id="@+id/currentDuration"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="current duration"
-                android:layout_weight="1"/>
-
-            <TextView
-                android:id="@+id/totalDuration"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="total duration"
-                android:layout_weight="1"
-                android:gravity="right"/>
-
-        </LinearLayout>
-
-        <SeekBar
-            android:id="@+id/songProgressBar"
-            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top"
-            android:maxHeight="5dp"
-            android:progress="0"
-            android:tag="tint_accent_color" />
-
-
-    </LinearLayout>
-
-
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerview"

@@ -1,10 +1,9 @@
-package com.ingreens.mediaplayerdemo;
+package com.ingreens.mediaplayerdemo.Activity;
 
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,7 +27,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -41,12 +39,20 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
+import com.ingreens.mediaplayerdemo.Constant.Allkey;
+import com.ingreens.mediaplayerdemo.Listner.CustomTouchListener;
+import com.ingreens.mediaplayerdemo.Service.MediaplayerService;
+import com.ingreens.mediaplayerdemo.Model.Audio;
+import com.ingreens.mediaplayerdemo.Status.PlaybackStatus;
+import com.ingreens.mediaplayerdemo.R;
+import com.ingreens.mediaplayerdemo.Adapter.RecycleViewAdapter;
+import com.ingreens.mediaplayerdemo.Utils.StorageUtil;
+import com.ingreens.mediaplayerdemo.Listner.TitleListener;
+import com.ingreens.mediaplayerdemo.Timer.Utilities;
+import com.ingreens.mediaplayerdemo.Listner.onItemClickListener;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
-import java.util.logging.Logger;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,MediaPlayer.OnCompletionListener,SeekBar.OnSeekBarChangeListener,TitleListener {
 
@@ -54,92 +60,83 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int EXTERNAL_STORAGE_PERMISSION_CONSTANT = 1;
     private static final int REQUEST_PERMISSION_SETTING = 2;
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.ingreens.mediaplayerdemo.PlayNewAudio";
+
     MediaplayerService player;
-    boolean serviceBound = false;
-    ArrayList<Audio> audioList=new ArrayList<>();
-    //Audio audio;
-    //Button btnPrevious,btnNext,btnBackward,btnForward,btnPlayPause,btnStop;
-    Button bottomSheetBack,bottomSheetFwd,bottomSheetPrev,bottomSheetNext;
-    boolean sentToSettings = false;
     SharedPreferences permissionStatus;
-     RecyclerView recyclerView;
-     RecycleViewAdapter adapter;
-    private boolean isShuffle = false;
-    private boolean isRepeat = false;
-     MediaPlayer mediaPlayer;
+    RecyclerView recyclerView;
+    RecycleViewAdapter adapter;
+    Utilities utils;
+
+    ArrayList<Audio> audioList=new ArrayList<>();
+    SeekBar bottomSheetSeekbar;
+    Handler seek_handler=new Handler();
+
+    boolean serviceBound = false;
+    boolean sentToSettings = false;
+    boolean updateProgress=true;
+
     private int seekForwardTime = 5000; // 5000 milliseconds
     private int seekBackwardTime = 5000; // 5000 milliseconds
-     SeekBar bottomSheetSeekbar;
-     Handler seek_handler=new Handler();
-     TextView songCurrentDurationLabel,bottomSheetcurrentDuration;
-     TextView songTotalDurationLabel,bottomSheettotalDuration;
-     //TextView songtitle;
-     Button bottomSheetRepeat,bottomSheetSuffle;
-     //ImageView albumart;
-     boolean updateProgress=true;
-      Utilities utils;
-      TextView bottomSheetTitle,bottomSheetArtist;
-      ImageView bottomSheetAlbumart,bottomSheetBckground,bottomBackground;
-      ImageButton bottomSheetPlaybtn,bottomSheetplaypause;
 
+    TextView bottomSheetcurrentDuration;
+    TextView bottomSheettotalDuration;
+    TextView bottomSheetTitle,bottomSheetArtist;
 
+    Button bottomSheetBack,bottomSheetFwd,bottomSheetPrev,bottomSheetNext;
+    Button bottomSheetRepeat,bottomSheetSuffle;
+
+    ImageView bottomSheetAlbumart,bottomSheetBckground;
+    ImageButton bottomSheetPlaybtn,bottomSheetplaypause;
+    /*private boolean isShuffle = false;
+    private boolean isRepeat = false;
+     MediaPlayer mediaPlayer;*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bottom_sheet);
-        /*btnPrevious=findViewById(R.id.btnPrevious);
-        btnNext=findViewById(R.id.btnNext);
-        btnBackward=findViewById(R.id.btnBackward);
-        btnForward=findViewById(R.id.btnForward);
-        btnPlayPause=findViewById(R.id.btnPlayPause);
-        btnStop=findViewById(R.id.btnStop);*/
-        //songProgressBar=findViewById(R.id.songProgressBar);
+
+        utils=new Utilities();
         bottomSheetSeekbar=findViewById(R.id.bottomSheetSeekbar);
-      //  repeat=findViewById(R.id.btnRepeat);
-        //suffle=findViewById(R.id.btnSuffle);
-        //albumart=findViewById(R.id.idAlbumArt);
-        //audio=new Audio();
-        songCurrentDurationLabel=findViewById(R.id.currentDuration);
-        songTotalDurationLabel=findViewById(R.id.totalDuration);
+
+        //bottom albumart,title,artist
         bottomSheetAlbumart=findViewById(R.id.bottomSheetAlbumArt);
         bottomSheetTitle=findViewById(R.id.bottomSheetTitle);
         bottomSheetArtist=findViewById(R.id.bottomSheetArtist);
+        //bottom playpause button
         bottomSheetPlaybtn=findViewById(R.id.bSheetPlaybtn);
+        bottomSheetPlaybtn.setOnClickListener(this);
+        //bottom sheet albumartimage,current and total duration
         bottomSheetBckground=findViewById(R.id.bottomSheetBckground);
         bottomSheetcurrentDuration=findViewById(R.id.bottomSheetcurrentDuration);
         bottomSheettotalDuration=findViewById(R.id.bottomSheettotalDuration);
+       //bottom sheet repeat button
         bottomSheetRepeat=findViewById(R.id.bottomSheetRepeat);
+        bottomSheetRepeat.setOnClickListener(this);
+        //bottom sheet suffle button
         bottomSheetSuffle=findViewById(R.id.bottomSheetSuffle);
-        bottomSheetplaypause=findViewById(R.id.bottomSheetPlayPause);
+        bottomSheetSuffle.setOnClickListener(this);
+        //bottom sheet back button
         bottomSheetBack=findViewById(R.id.bottomSheetBack);
+        bottomSheetBack.setOnClickListener(this);
+        //bottom sheet forward button
         bottomSheetFwd=findViewById(R.id.bottomSheetFrwd);
+        bottomSheetFwd.setOnClickListener(this);
+        //bottom sheet playpause button
+        bottomSheetplaypause=findViewById(R.id.bottomSheetPlayPause);
+        bottomSheetplaypause.setOnClickListener(this);
+        //bottom sheet previous button
         bottomSheetPrev=findViewById(R.id.bottomSheetPrev);
+        bottomSheetPrev.setOnClickListener(this);
+        //bottom sheet next button
         bottomSheetNext=findViewById(R.id.bottomSheetNext);
-       // bottomBackground=findViewById(R.id.bottombackground);
-        utils=new Utilities();
+        bottomSheetNext.setOnClickListener(this);
+        //set default button icon when app is launched...
         bottomSheetplaypause.setBackgroundResource(R.drawable.ic_action_playy);
         bottomSheetPlaybtn.setBackgroundResource(R.drawable.ic_action_playy);
-        //player=new MediaplayerService();
-        /*btnStop.setOnClickListener(this);
-        btnPlayPause.setOnClickListener(this);
-        btnPrevious.setOnClickListener(this);
-        btnNext.setOnClickListener(this);
-        btnBackward.setOnClickListener(this);
-        btnForward.setOnClickListener(this);
-        repeat.setOnClickListener(this);
-        suffle.setOnClickListener(this);*/
-        bottomSheetPlaybtn.setOnClickListener(this);
-        bottomSheetRepeat.setOnClickListener(this);
-        bottomSheetSuffle.setOnClickListener(this);
-        bottomSheetplaypause.setOnClickListener(this);
-        bottomSheetBack.setOnClickListener(this);
-        bottomSheetFwd.setOnClickListener(this);
-        bottomSheetPrev.setOnClickListener(this);
-        bottomSheetNext.setOnClickListener(this);
+
+        ////bottom sheet behavior
         View bottomSheet = findViewById(R.id.design_bottom_sheet);
         final BottomSheetBehavior behavior = BottomSheetBehavior.from(bottomSheet);
-        // Listeners
-
         behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
@@ -168,8 +165,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-
-
        bottomSheet.setOnClickListener(new View.OnClickListener() {
            @Override
            public void onClick(View view) {
@@ -181,30 +176,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
            }
        });
 
-
-        /*songProgressBar.setOnTouchListener(new View.OnTouchListener() {
-
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-
-                switch (motionEvent.getAction()){
-
-                    case MotionEvent.ACTION_DOWN: {
-//                        player.mediaPlayer.pause();
-                        updateProgress=false;
-                    } break;
-                    case MotionEvent.ACTION_UP:
-                        updateProgress=false;
-                        SeekBar seekBar=(SeekBar)view;
-                        int progress=player.mediaPlayer.getDuration()*seekBar.getProgress()/100;
-                        player.mediaPlayer.seekTo(progress);
-//                        player.mediaPlayer.start();
-                        updateProgress=true;
-                     break;
-                }
-                return false;
-            }
-        });*/
+       //// working with bottomsheet seebar
         bottomSheetSeekbar.setOnTouchListener(new View.OnTouchListener() {
 
             @Override
@@ -229,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
         permissionStatus = getSharedPreferences("permissionStatus",MODE_PRIVATE);
-
+        ////marsmallow permission checking...
                 if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                     if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                         //Show Informat ion about why you need the permission
@@ -294,6 +266,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     bottomSheetPlaybtn.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
+                            /*int lastsongindex=permissionStatus.getInt(Allkey.LAST_SONG_INDEX,0);
+                            String lastsongpath=permissionStatus.getString(Allkey.LAST_SONG,"");*/
                              int index=permissionStatus.getInt("songindex",0);
                             playAudio(index);
                             Audio audio=audioList.get(index);
@@ -315,11 +289,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
 
-
-
-
-
-
+    //initialization recycleview
     private void initRecyclerView() {
         if (audioList.size() > 0) {
              recyclerView = (RecyclerView) findViewById(R.id.recyclerview);
@@ -351,53 +321,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     {
                        setAlbumArt();
                     }
-
-                    //// get title,album from metdata retriver for individual song
-                    /*String artist = metaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-                    String title = metaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-                    String album = metaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-                    songtitle.setText(title);
-                    songtitle.setText(album);*/
-
-                    /*songtitle.setText(audio.getTitle());
-                    songtitle.setText(audio.getAlbum());*/
+                    // set bottom title
                     bottomSheetTitle.setText(audio.getAlbum());
-                    bottomSheetArtist.setText(audio.getArtist());
+                    bottomSheetTitle.setSingleLine(true);
                     bottomSheetTitle.setEllipsize(TextUtils.TruncateAt.MARQUEE);
                     bottomSheetTitle.setSelected(true);
-                    bottomSheetTitle.setSingleLine(true);
+                    // set bottom artist
+                    bottomSheetArtist.setText(audio.getArtist());
+                    bottomSheetArtist.setSingleLine(true);
                     bottomSheetArtist.setEllipsize(TextUtils.TruncateAt.MARQUEE);
                     bottomSheetArtist.setSelected(true);
-                    bottomSheetArtist.setSingleLine(true);
-
-
-
-                    //albumart.setImageBitmap(audio.getAlbumart());
-                    //albumart.setImageResource(audio.getAlbumart());
                     updateProgressBar();
                 }
             }));
 
         }
-    }
-    @Override
-    public void setAlbumArt(Bitmap bmp){
-        //albumart.setImageBitmap(bmp); //associated cover art in bitmap
-        bottomSheetAlbumart.setImageBitmap(bmp);
-        bottomSheetBckground.setImageBitmap(bmp);
-        //bottomBackground.setImageBitmap(bmp);
-        //albumart.setAdjustViewBounds(true);
-        //albumart.setLayoutParams(new LinearLayout.LayoutParams(500, 500));
-    }
-
-    @Override
-    public void setAlbumArt() {
-        //albumart.setImageResource(R.drawable.audio_file); //any default cover resourse folder
-        bottomSheetAlbumart.setImageResource(R.drawable.ic_action_music);
-       // bottomBackground.setImageResource(R.drawable.audio_file);
-        bottomSheetBckground.setImageResource(R.drawable.audio_file);
-        //albumart.setAdjustViewBounds(true);
-        //albumart.setLayoutParams(new LinearLayout.LayoutParams(500,500 ));
     }
 
     //Binding this Client to the AudioPlayer Service
@@ -434,14 +372,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //playerIntent.putExtra("media", media);
             startService(playerIntent);
             bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-            /*MediaMetadataRetriever metaRetriever= new MediaMetadataRetriever();
-            metaRetriever.setDataSource(audio.getData());
-            String artist = metaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-            String album = metaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-            System.out.println("##############################");
-            System.out.println("song name hochhee==="+album);
-            System.out.println("##############################");*/
-           // songtitle.setText(album);
 
         } else {
             //Store the new audioIndex to SharedPreferences
@@ -451,20 +381,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //Send media with BroadcastReceiver
             Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
             sendBroadcast(broadcastIntent);
-            /*MediaMetadataRetriever metaRetriever= new MediaMetadataRetriever();
-            metaRetriever.setDataSource(audio.getData());
-            String artist = metaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-            String album = metaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-            System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-            System.out.println("song name hochhee==="+album);
-            System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");*/
-
 
         }
-    }
-
-    public void setSongTitle(){
-
     }
 
 
@@ -507,14 +425,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onDestroy() {
-       /* String name=permissionStatus.getString("songname","");
-        String artist=permissionStatus.getString("songartist","");
-        //int index=permissionStatus.getInt("songindex",0);
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-        System.out.println("song name ===================="+name);
-        System.out.println("artist name ===================="+artist);
-       // System.out.println("song index====================="+index);
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");*/
         super.onDestroy();
         if (serviceBound) {
             unbindService(serviceConnection);
@@ -527,47 +437,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         }
     }
+
     private void loadAudio() {
         ContentResolver contentResolver = getContentResolver();
-
-        /*final String[] columns  = new String[]{ android.provider.MediaStore.Audio.Albums._ID,
-                android.provider.MediaStore.Audio.Albums.ALBUM,
-                MediaStore.Audio.Albums.ALBUM_ART };*/
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        /*final String[] cursor_cols = { MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.ALBUM,
-                MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.ALBUM_ID,
-                MediaStore.Audio.Media.DURATION };*/
         String selection = MediaStore.Audio.Media.IS_MUSIC+ "!= 0";
         String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
-        //String selection = MediaStore.Audio.Media.IS_MUSIC+ "=1";
         Cursor cursor = contentResolver.query(uri, null, selection, null, sortOrder);
         if (cursor != null && cursor.getCount() > 0) {
             audioList = new ArrayList<>();
             while (cursor.moveToNext()) {
-                /*System.out.println("##############################");
-                System.out.println("audiolist er size==="+audioList.size());
-                System.out.println("##############################");*/
 
                 String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
                 String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
                 String totalduration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
-                /*String pathId = cursor.getString(Integer.parseInt(data) );
-                MediaMetadataRetriever metaRetriever= new MediaMetadataRetriever();
-                metaRetriever.setDataSource(pathId);
-                byte[] dataa=metaRetriever.getEmbeddedPicture();
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(dataa, 0, dataa.length);*/
-                   // setAlbumArt(bitmap);
-                // Save to audioList
+
                 Audio audio=new Audio(data,title,album,artist,totalduration);
                 audioList.add(audio);
             }
         }
         cursor.close();
     }
+
     @Override
     public void onClick(View view) {
         switch(view.getId()){
@@ -619,19 +512,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     player.mediaPlayer.seekTo(player.seekBarGetTotalDuration());
                 }
                 break;
-            /*case R.id.btnStop:
-                //toggleBottomSheet();
-                if (player==null){
-                    return;
-                }
-                player.stopMedia();
-                break;*/
             case R.id.bSheetPlaybtn:
             case R.id.bottomSheetPlayPause:
                 if (player==null){
                     return;
                 }
-
                 if (player.isPlaying()){
                     System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
                     System.out.println("pause hoye geche");
@@ -665,31 +550,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 player.suffle();
                 break;
-            /*case R.id.bottomSheetBack:
-                if (player==null){
-                    return;
-                }
-                // get current song position
-                //int currentposition = player.seekBarGetCurrentPosition();
-                // check if seekBackward time is greater than 0 sec
-                if(currentposition - seekBackwardTime >= 0){
-                    // forward song
-                    player.mediaPlayer.seekTo(currentposition - seekBackwardTime);
-                }else{
-                    // backward to starting position
-                    player.mediaPlayer.seekTo(0);
-                }
-                break;*/
-            /*case R.id.bottomSheetFrwd:
-                break;*/
-           /* case R.id.bottomSheetPrev:
-                if (player==null){
-                    return;
-                }
-                player.skipToPrevious();
-                break;*/
-            /*case R.id.bottomSheetNext:
-                break;*/
 
         }
     }
@@ -709,8 +569,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             try {
                 totalDuration = player.seekBarGetTotalDuration();
                 currentDuration = player.seekBarGetCurrentPosition();
-                songCurrentDurationLabel.setText(utils.milliSecondsToTimer(currentDuration)); // Displaying time completed playing
-                songTotalDurationLabel.setText(utils.milliSecondsToTimer(totalDuration)); // Displaying time completed playing
                 bottomSheetcurrentDuration.setText(utils.milliSecondsToTimer(currentDuration));
                 bottomSheettotalDuration.setText(utils.milliSecondsToTimer(totalDuration));
                 int progress = (int)(utils.getProgressPercentage(currentDuration, totalDuration));
@@ -753,11 +611,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 */
     }
 
+    //callback method for set title
     @Override
     public void setTitle(String album) {
-        //songtitle.setText(album);
         bottomSheetTitle.setText(album);
     }
+
+    //callback method for set albumart image
+    @Override
+    public void setAlbumArt(Bitmap bmp){
+        ////associated cover art in bitmap
+        bottomSheetAlbumart.setImageBitmap(bmp);
+        /*bottomSheetAlbumart.setAdjustViewBounds(true);
+        bottomSheetAlbumart.setLayoutParams(new LinearLayout.LayoutParams(500, 500));
+*/
+        bottomSheetBckground.setImageBitmap(bmp);
+    }
+    //callback method for set default albumart image
+    @Override
+    public void setAlbumArt() {
+        ////any default cover resourse folder
+        bottomSheetAlbumart.setImageResource(R.drawable.ic_action_music);
+        bottomSheetBckground.setImageResource(R.drawable.audio_file);
+    }
+
 
 
 }

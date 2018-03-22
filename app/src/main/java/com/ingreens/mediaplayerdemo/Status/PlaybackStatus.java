@@ -1,4 +1,4 @@
-package com.ingreens.mediaplayerdemo;
+package com.ingreens.mediaplayerdemo.Status;
 
 /**
  * Created by root on 6/3/18.

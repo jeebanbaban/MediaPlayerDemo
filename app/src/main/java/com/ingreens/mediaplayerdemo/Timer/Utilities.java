@@ -1,4 +1,4 @@
-package com.ingreens.mediaplayerdemo;
+package com.ingreens.mediaplayerdemo.Timer;
 
 /**
  * Created by root on 8/3/18.

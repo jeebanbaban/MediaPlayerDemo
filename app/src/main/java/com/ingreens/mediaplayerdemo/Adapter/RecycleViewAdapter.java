@@ -1,4 +1,4 @@
-package com.ingreens.mediaplayerdemo;
+package com.ingreens.mediaplayerdemo.Adapter;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -8,11 +8,12 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import com.ingreens.mediaplayerdemo.Model.Audio;
+import com.ingreens.mediaplayerdemo.R;
+
 import java.util.List;
 
 /**
